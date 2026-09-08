@@ -5,21 +5,28 @@
    1) Dibuja los productos en la grilla.
    2) Filtra por categoría (pastillas del menú).
    3) Filtra por texto (buscador).
-   4) Abre y cierra el panel del carrito.
+   4) Carrito: agregar, sumar/restar, eliminar,
+      vaciar y calcular el total.
+   5) Abre y cierra el panel del carrito.
 
-   El carrito funcional (agregar, sumar, restar,
-   eliminar, total) lo agregamos en el próximo paso.
+   Lo que falta: pedir los datos del cliente y
+   generar el mensaje de WhatsApp (próximo paso).
    ============================================ */
 
 // Guardan cuál es el filtro activo en cada momento
 let categoriaActual = 'todos';
 let terminoBusqueda = '';
 
+// El carrito: un array de objetos { id, nombre, precio, cantidad }
+let carrito = [];
+
 document.addEventListener('DOMContentLoaded', () => {
   aplicarFiltros();
   activarPillsDeCategoria();
   activarBuscador();
   activarCarritoDrawer();
+  activarBotonesDeCarrito();
+  activarControlesDelCarrito();
 });
 
 /* ----------------------------------------------
@@ -173,20 +180,175 @@ function aplicarFiltros() {
 function activarCarritoDrawer() {
   const cartToggle = document.getElementById('cart-toggle');
   const cartClose = document.getElementById('cart-close');
-  const cartDrawer = document.getElementById('cart-drawer');
   const cartOverlay = document.getElementById('cart-overlay');
-
-  function abrirCarrito() {
-    cartDrawer.classList.add('open');
-    cartOverlay.classList.add('visible');
-  }
-
-  function cerrarCarrito() {
-    cartDrawer.classList.remove('open');
-    cartOverlay.classList.remove('visible');
-  }
+  const clearCartButton = document.getElementById('clear-cart');
 
   cartToggle.addEventListener('click', abrirCarrito);
   cartClose.addEventListener('click', cerrarCarrito);
   cartOverlay.addEventListener('click', cerrarCarrito);
+  clearCartButton.addEventListener('click', vaciarCarrito);
+}
+
+function abrirCarrito() {
+  document.getElementById('cart-drawer').classList.add('open');
+  document.getElementById('cart-overlay').classList.add('visible');
+}
+
+function cerrarCarrito() {
+  document.getElementById('cart-drawer').classList.remove('open');
+  document.getElementById('cart-overlay').classList.remove('visible');
+}
+
+/* ----------------------------------------------
+   Escucha los clics en "Agregar al carrito" de
+   cualquier tarjeta de producto (delegación de
+   eventos: un solo listener en la grilla en vez
+   de uno por cada botón)
+   ---------------------------------------------- */
+function activarBotonesDeCarrito() {
+  const grid = document.getElementById('product-grid');
+
+  grid.addEventListener('click', evento => {
+    const boton = evento.target.closest('.add-to-cart-button');
+    if (!boton || boton.disabled) return;
+
+    const id = Number(boton.dataset.id);
+    agregarAlCarrito(id);
+    abrirCarrito();
+  });
+}
+
+/* ----------------------------------------------
+   Agrega un producto al carrito. Si ya estaba,
+   simplemente le suma 1 a la cantidad.
+   ---------------------------------------------- */
+function agregarAlCarrito(id) {
+  const producto = productos.find(p => p.id === id);
+  if (!producto) return;
+
+  const itemExistente = carrito.find(item => item.id === id);
+
+  if (itemExistente) {
+    itemExistente.cantidad += 1;
+  } else {
+    carrito.push({
+      id: producto.id,
+      nombre: producto.nombre,
+      precio: producto.precio,
+      cantidad: 1
+    });
+  }
+
+  renderizarCarrito();
+}
+
+/* ----------------------------------------------
+   Suma o resta 1 a la cantidad de un producto del
+   carrito. Si llega a 0, se elimina directamente.
+   ---------------------------------------------- */
+function cambiarCantidad(id, delta) {
+  const item = carrito.find(item => item.id === id);
+  if (!item) return;
+
+  item.cantidad += delta;
+
+  if (item.cantidad <= 0) {
+    eliminarDelCarrito(id);
+    return;
+  }
+
+  renderizarCarrito();
+}
+
+function eliminarDelCarrito(id) {
+  carrito = carrito.filter(item => item.id !== id);
+  renderizarCarrito();
+}
+
+function vaciarCarrito() {
+  carrito = [];
+  renderizarCarrito();
+}
+
+/* ----------------------------------------------
+   Vuelve a dibujar el contenido del panel del
+   carrito: la lista de productos, el total y el
+   contador del ícono del header. Se llama cada
+   vez que el carrito cambia.
+   ---------------------------------------------- */
+function renderizarCarrito() {
+  const contenedor = document.getElementById('cart-items');
+  const totalEl = document.getElementById('cart-total');
+  const checkoutButton = document.getElementById('checkout-button');
+
+  if (carrito.length === 0) {
+    contenedor.innerHTML = '<p class="cart-empty">Todavía no agregaste productos.</p>';
+    totalEl.textContent = formatearPrecio(0);
+    checkoutButton.disabled = true;
+    actualizarContadorCarrito();
+    return;
+  }
+
+  contenedor.innerHTML = '';
+
+  carrito.forEach(item => {
+    const subtotal = item.precio * item.cantidad;
+
+    const fila = document.createElement('div');
+    fila.className = 'cart-item';
+    fila.innerHTML = `
+      <div class="cart-item-info">
+        <span class="cart-item-name">${item.nombre}</span>
+        <span class="cart-item-price">${formatearPrecio(item.precio)} c/u</span>
+      </div>
+      <div class="cart-item-controls">
+        <div class="qty-stepper">
+          <button class="qty-button" data-action="restar" data-id="${item.id}" aria-label="Restar">−</button>
+          <span class="qty-value">${item.cantidad}</span>
+          <button class="qty-button" data-action="sumar" data-id="${item.id}" aria-label="Sumar">+</button>
+        </div>
+        <span class="cart-item-subtotal">${formatearPrecio(subtotal)}</span>
+        <button class="cart-item-remove" data-action="eliminar" data-id="${item.id}" aria-label="Eliminar producto">&times;</button>
+      </div>
+    `;
+
+    contenedor.appendChild(fila);
+  });
+
+  const total = carrito.reduce((suma, item) => suma + item.precio * item.cantidad, 0);
+  totalEl.textContent = formatearPrecio(total);
+  checkoutButton.disabled = false;
+
+  actualizarContadorCarrito();
+}
+
+/* ----------------------------------------------
+   Actualiza el numerito rojo sobre el ícono del
+   carrito, con la cantidad total de unidades
+   ---------------------------------------------- */
+function actualizarContadorCarrito() {
+  const contador = document.getElementById('cart-count');
+  const totalUnidades = carrito.reduce((suma, item) => suma + item.cantidad, 0);
+  contador.textContent = totalUnidades;
+}
+
+/* ----------------------------------------------
+   Escucha los clics dentro del panel del carrito
+   (sumar, restar, eliminar) usando delegación de
+   eventos, igual que con "Agregar al carrito"
+   ---------------------------------------------- */
+function activarControlesDelCarrito() {
+  const contenedor = document.getElementById('cart-items');
+
+  contenedor.addEventListener('click', evento => {
+    const boton = evento.target.closest('button[data-action]');
+    if (!boton) return;
+
+    const id = Number(boton.dataset.id);
+    const accion = boton.dataset.action;
+
+    if (accion === 'sumar') cambiarCantidad(id, 1);
+    if (accion === 'restar') cambiarCantidad(id, -1);
+    if (accion === 'eliminar') eliminarDelCarrito(id);
+  });
 }
