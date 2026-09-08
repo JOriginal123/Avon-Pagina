@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Avon — Catálogo y pedidos</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-mark">Avon</span>
+        <span class="brand-tagline">Catálogo personal</span>
+      </div>
+
+      <div class="header-actions">
+        <div class="search-box">
+          <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="7"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="search" id="search-input" placeholder="Buscar un producto...">
+        </div>
+
+        <button id="cart-toggle" class="cart-button" aria-label="Ver carrito">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M3 4h2l2.4 12.4a2 2 0 0 0 2 1.6h7.2a2 2 0 0 0 2-1.6L20 8H6"></path>
+            <circle cx="9" cy="20" r="1.3"></circle>
+            <circle cx="17" cy="20" r="1.3"></circle>
+          </svg>
+          <span id="cart-count" class="cart-count">0</span>
+        </button>
+      </div>
+    </div>
+
+    <nav class="category-nav" id="category-nav" aria-label="Categorías">
+      <button class="category-pill active" data-category="todos">Todos</button>
+      <button class="category-pill" data-category="Perfumes">Perfumes</button>
+      <button class="category-pill" data-category="Labiales">Labiales</button>
+      <button class="category-pill" data-category="Maquillaje">Maquillaje</button>
+      <button class="category-pill" data-category="Cuidado personal">Cuidado personal</button>
+      <button class="category-pill" data-category="Cocina">Cocina</button>
+      <button class="category-pill" data-category="Otros">Otros</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="catalog" aria-label="Catálogo de productos">
+      <div class="product-grid" id="product-grid">
+        <!-- Los productos se generan automáticamente desde js/script.js -->
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Los pedidos se coordinan por WhatsApp. No se realizan cobros dentro de esta página.</p>
+  </footer>
+
+  <!-- Panel lateral del carrito -->
+  <aside id="cart-drawer" class="cart-drawer" aria-label="Carrito de compras">
+    <div class="cart-header">
+      <h2>Tu pedido</h2>
+      <button id="cart-close" class="icon-button" aria-label="Cerrar carrito">&times;</button>
+    </div>
+
+    <div id="cart-items" class="cart-items">
+      <p class="cart-empty">Todavía no agregaste productos.</p>
+    </div>
+
+    <div class="cart-footer">
+      <div class="cart-total-row">
+        <span>Total</span>
+        <span id="cart-total">$0</span>
+      </div>
+      <button id="checkout-button" class="primary-button" disabled>Realizar pedido por WhatsApp</button>
+      <button id="clear-cart" class="text-button">Vaciar carrito</button>
+    </div>
+  </aside>
+
+  <div id="cart-overlay" class="cart-overlay"></div>
+
+  <script src="products.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
