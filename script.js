@@ -1,18 +1,24 @@
 /* ============================================
    SCRIPT PRINCIPAL DE LA TIENDA
    ============================================
-   Por ahora este archivo solo hace dos cosas:
+   Hasta ahora este archivo hace:
    1) Dibuja los productos en la grilla.
-   2) Abre y cierra el panel del carrito.
+   2) Filtra por categoría (pastillas del menú).
+   3) Filtra por texto (buscador).
+   4) Abre y cierra el panel del carrito.
 
-   El filtrado por categoría, el buscador y el
-   carrito funcional los agregamos en los
-   próximos pasos.
+   El carrito funcional (agregar, sumar, restar,
+   eliminar, total) lo agregamos en el próximo paso.
    ============================================ */
 
+// Guardan cuál es el filtro activo en cada momento
+let categoriaActual = 'todos';
+let terminoBusqueda = '';
+
 document.addEventListener('DOMContentLoaded', () => {
-  renderizarProductos(productos);
+  aplicarFiltros();
   activarPillsDeCategoria();
+  activarBuscador();
   activarCarritoDrawer();
 });
 
@@ -111,9 +117,8 @@ function formatearPrecio(numero) {
 }
 
 /* ----------------------------------------------
-   Categorías: por ahora solo marca visualmente
-   cuál está seleccionada. El filtrado real de
-   productos se agrega en el próximo paso.
+   Categorías: al hacer clic, guarda la categoría
+   elegida y vuelve a filtrar la grilla
    ---------------------------------------------- */
 function activarPillsDeCategoria() {
   const pills = document.querySelectorAll('.category-pill');
@@ -122,8 +127,44 @@ function activarPillsDeCategoria() {
     pill.addEventListener('click', () => {
       pills.forEach(p => p.classList.remove('active'));
       pill.classList.add('active');
+
+      categoriaActual = pill.dataset.category;
+      aplicarFiltros();
     });
   });
+}
+
+/* ----------------------------------------------
+   Buscador: filtra a medida que el cliente escribe
+   ---------------------------------------------- */
+function activarBuscador() {
+  const input = document.getElementById('search-input');
+
+  input.addEventListener('input', () => {
+    terminoBusqueda = input.value.trim().toLowerCase();
+    aplicarFiltros();
+  });
+}
+
+/* ----------------------------------------------
+   Combina el filtro de categoría + el de búsqueda
+   y vuelve a dibujar la grilla con el resultado.
+   Se llama cada vez que cambia alguno de los dos.
+   ---------------------------------------------- */
+function aplicarFiltros() {
+  let resultado = productos;
+
+  if (categoriaActual !== 'todos') {
+    resultado = resultado.filter(producto => producto.categoria === categoriaActual);
+  }
+
+  if (terminoBusqueda !== '') {
+    resultado = resultado.filter(producto =>
+      producto.nombre.toLowerCase().includes(terminoBusqueda)
+    );
+  }
+
+  renderizarProductos(resultado);
 }
 
 /* ----------------------------------------------
@@ -149,4 +190,3 @@ function activarCarritoDrawer() {
   cartClose.addEventListener('click', cerrarCarrito);
   cartOverlay.addEventListener('click', cerrarCarrito);
 }
-
